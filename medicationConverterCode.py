@@ -1,6 +1,9 @@
+from medications import MEDICATIONS
+
 class Converter:
     def __init__(self):
         self.conversions = self.load_conversions()
+        self.medications = MEDICATIONS
     
     def load_conversions(self):
         return {
@@ -14,100 +17,87 @@ class Converter:
                 "l": 1000,
                 "oz": 29.5735
 #Confirm conversions
-            },
-            "medications": {
-                "insulin_u100": {
-                    "type": "insulin",
-                    "units_per_ml": 100
-                },
-                "insulin_u500": {
-                    "type": "insulin",
-                    "units_per_ml": 500
-                },
-                "vitamin_d": {
-                    "type": "vitamin",
-                    "iu_per_mcg": 40
-                }
-            }  
+            }
         }
-    def convert(self, num01, measurement01, measurement02, medication=None):
-        measurement01 = measurement01.lower()
-        measurement02 = measurement02.lower()
+    def convert(self, dose_amount, from_unit, to_unit, medication=None):
+        from_unit = from_unit.lower()
+        to_unit = to_unit.lower()
 
         med_result = self.convert_medication(
-            num01, measurement01, measurement02, medication
+            dose_amount, from_unit, to_unit, medication
         )
         if med_result is not None:
             return med_result
 #Add medications
         for category in ["weight", "volume"]:
-            if (measurement01 in self.conversions[category] and
-                measurement02 in self.conversions[category]):
+            if (from_unit in self.conversions[category] and
+                to_unit in self.conversions[category]):
 
-                base_value = num01 * self.conversions[category][measurement01]
-                converted_value = base_value / self.conversions[category][measurement02]
-                return converted_value
+                base_amount = dose_amount * self.conversions[category][from_unit]
+                converted_amount = base_amount / self.conversions[category][to_unit]
+                return converted_amount
             
         return None
 
-    def convert_medication(self, num01, measurement01, measurement02, medication):
+    def convert_medication(self, dose_amount, from_unit, to_unit, medication):
         if not medication:
             return None
 
-        med_key = medication.lower()
-        meds = self.conversions.get("medications", {})
+        medication_key = medication.lower()
 
-        if med_key not in meds:
+        if medication_key not in self.medications:
             return None
 
-        med_data = meds[med_key]
+        medication_data = self.medications[medication_key]
 
-        if med_data["type"] == "insulin":
-            units_per_ml = med_data["units_per_ml"]
+        if medication_data["type"] == "insulin":
+            units_per_ml = medication_data["units_per_ml"]
 
-            if measurement01 == "units" and measurement02 == "ml":
-                return num01 / units_per_ml
-            elif measurement01 == "ml" and measurement02 == "units":
-                return num01 * units_per_ml
+            if from_unit == "units" and to_unit == "ml":
+                return dose_amount / units_per_ml
+            elif from_unit == "ml" and to_unit == "units":
+                return dose_amount * units_per_ml
 ## THIS IS WHERE YOU LEFT OFF WHEN YOU HAD TO RESTART YOUR COMPUTER
-        if med_data["type"] == "vitamin":
-            iu_per_mcg = med_data["iu_per_mcg"]
+        if medication_data["type"] == "vitamin":
+            iu_per_mcg = medication_data["iu_per_mcg"]
             
-            if measurement01 == "mcg" and measurement02 == "iu":
-                return num01 * iu_per_mcg
-            elif measurement01 == "iu" and measurement02 == "mcg":
-                return num01 / iu_per_mcg
+            if from_unit == "mcg" and to_unit == "iu":
+                return dose_amount * iu_per_mcg
+            elif from_unit == "iu" and to_unit == "mcg":
+                return dose_amount / iu_per_mcg
+
+        return None
 
 class ConversionCalculator:
     def __init__(self):
         self.converter = Converter()
 
-    def validate_input(self, num01, measurement01, measurement02):
+    def validate_input(self, dose_amount, from_unit, to_unit):
         try:
-            num01 = float(num01)
-            if num01 < 0:
+            dose_amount = float(dose_amount)
+            if dose_amount < 0:
                 return False, "Invalid Input: Negative numbers are not allowed."
         except ValueError:
                 return False, "Invalid Input: Please enter a valid number."
                 
-        if not measurement01 or not measurement02:
+        if not from_unit or not to_unit:
                 return False, "Invalid Input: Measurement fields cannot be blank."
                 
-        return True, num01
+        return True, dose_amount
             
-    def calculate(self, num01, measurement01, measurement02, medication):
-        is_valid, result = self.validate_input(num01, measurement01, measurement02)
+    def calculate(self, dose_amount, from_unit, to_unit, medication):
+        is_valid, result = self.validate_input(dose_amount, from_unit, to_unit)
 
         if not is_valid:
             return result
                 
         converted_value = self.converter.convert(
-            result, measurement01, measurement02, medication)
+            result, from_unit, to_unit, medication)
                 
         if converted_value is None:
-            return "Invalid Input: Conversion not supported."
+            return "Invalid Input: Conversion not supported or impossible."
                 
-        return f"Result: {converted_value:.4f} {measurement02}"
+        return f"Result: {converted_value:.4f} {to_unit}"
             
 class User:
     def __init__(self):
@@ -117,25 +107,25 @@ class User:
         print("\n Medication Conversion Calculator")
 
         while True:
-            num01 = input("Enter the number to convert(or 'q' to quit): ")
-            if num01.lower() == 'q':
+            dose_amount = input("Enter the number to convert(or 'q' to quit): ")
+            if dose_amount.lower() == 'q':
                 print("Goodbye!")
                 break
 
-            measurement01 = input("Convert FROM (mg, g, mcg, ml, l, oz, units, iu): ")
-            measurement02 = input("Convert TO (mg, g, mcg, ml, l, oz, units, iu): ")
+            from_unit = input("Convert FROM (mg, g, mcg, ml, l, oz, units, iu): ")
+            to_unit = input("Convert TO (mg, g, mcg, ml, l, oz, units, iu): ")
         
             medication = self.select_medication()
         
 #Should units be changed to insulin units?
             result = self.calculator.calculate(
-                num01, measurement01, measurement02, medication
+                dose_amount, from_unit, to_unit, medication
             )
 
             self.display_result(result)
 
     def select_medication(self):
-        meds = self.calculator.converter.conversions.get("medications", {})
+        meds = self.calculator.converter.medications
 
         if not meds:
             return None
