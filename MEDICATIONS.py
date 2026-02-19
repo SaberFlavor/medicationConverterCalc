@@ -1,4 +1,4 @@
- medications = {
+ MEDICATIONS = {
                 "insulin_u100": {
                     "type": "insulin",
                     "units_per_ml": 100
