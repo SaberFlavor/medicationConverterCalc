@@ -1,3 +1,4 @@
+# Medication Conversion Calculator
 from medications import MEDICATIONS
 
 class Converter:
@@ -6,6 +7,7 @@ class Converter:
         self.medications = MEDICATIONS
     
     def load_conversions(self):
+# This returns the standard weight and volume conversions.
         return {
             "weight": {
                 "mg": 1,
@@ -16,10 +18,10 @@ class Converter:
                 "ml": 1,
                 "l": 1000,
                 "oz": 29.5735
-#Confirm conversions
             }
         }
     def convert(self, dose_amount, from_unit, to_unit, medication=None):
+# Converts the dose_amount from one unit to another.
         from_unit = from_unit.lower()
         to_unit = to_unit.lower()
 
@@ -28,7 +30,7 @@ class Converter:
         )
         if med_result is not None:
             return med_result
-#Add medications
+            
         for category in ["weight", "volume"]:
             if (from_unit in self.conversions[category] and
                 to_unit in self.conversions[category]):
@@ -40,6 +42,7 @@ class Converter:
         return None
 
     def convert_medication(self, dose_amount, from_unit, to_unit, medication):
+# Converts a dose for a specific medication.
         if not medication:
             return None
 
@@ -57,7 +60,7 @@ class Converter:
                 return dose_amount / units_per_ml
             elif from_unit == "ml" and to_unit == "units":
                 return dose_amount * units_per_ml
-## THIS IS WHERE YOU LEFT OFF WHEN YOU HAD TO RESTART YOUR COMPUTER
+
         if medication_data["type"] == "vitamin":
             iu_per_mcg = medication_data["iu_per_mcg"]
             
@@ -73,6 +76,7 @@ class ConversionCalculator:
         self.converter = Converter()
 
     def validate_input(self, dose_amount, from_unit, to_unit):
+# Makes sure that the dose_amount is valid.
         try:
             dose_amount = float(dose_amount)
             if dose_amount < 0:
@@ -86,6 +90,7 @@ class ConversionCalculator:
         return True, dose_amount
             
     def calculate(self, dose_amount, from_unit, to_unit, medication):
+# Makes sure the input is valid and performs the conversion.
         is_valid, result = self.validate_input(dose_amount, from_unit, to_unit)
 
         if not is_valid:
@@ -104,6 +109,7 @@ class User:
         self.calculator = ConversionCalculator()
                 
     def display_calcscreen(self):
+# Promts user for dose_amount, from_unit, to_unit, and medication. Continues unless the user quits.
         print("\n Medication Conversion Calculator")
 
         while True:
@@ -117,7 +123,6 @@ class User:
         
             medication = self.select_medication()
         
-#Should units be changed to insulin units?
             result = self.calculator.calculate(
                 dose_amount, from_unit, to_unit, medication
             )
@@ -125,6 +130,7 @@ class User:
             self.display_result(result)
 
     def select_medication(self):
+# Lists available medications and prompts the user to select one. Returns selected medication or None if the user only pushes enter.
         meds = self.calculator.converter.medications
 
         if not meds:
